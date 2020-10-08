@@ -4,6 +4,7 @@ using BenchmarkDotNet.Attributes;
 namespace Dotnetos.AsyncExpert.Homework.Module01.Benchmark
 {
     [DisassemblyDiagnoser(exportCombinedDisassemblyReport: true)]
+    [MemoryDiagnoser]
     public class FibonacciCalc
     {
         // HOMEWORK:
@@ -13,6 +14,8 @@ namespace Dotnetos.AsyncExpert.Homework.Module01.Benchmark
         // 4. Open disassembler report and compare machine code
         // 
         // You can use the discussion panel to compare your results with other students
+
+        private ulong[] _cache;
 
         [Benchmark(Baseline = true)]
         [ArgumentsSource(nameof(Data))]
@@ -26,14 +29,35 @@ namespace Dotnetos.AsyncExpert.Homework.Module01.Benchmark
         [ArgumentsSource(nameof(Data))]
         public ulong RecursiveWithMemoization(ulong n)
         {
-            return 0;
+            if (_cache == null) _cache = new ulong[n];
+
+            if (n == 1 || n == 2)
+            {
+                _cache[n - 1] = 1;
+                return 1;
+            }
+
+            if (_cache[n - 1] != 0) return _cache[n - 1];
+
+            _cache[n-1] = RecursiveWithMemoization(n - 2) + RecursiveWithMemoization(n - 1);
+            return _cache[n - 1];
         }
         
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
         public ulong Iterative(ulong n)
         {
-            return 0;
+            var (r, a, b) = (0UL, 1UL, 1UL);
+
+            for (ulong i = 2; i < n; ++i)
+            {
+                //results[i] = results[i - 2] + results[i - 1];
+                r = b + a;
+                a = b;
+                b = r;
+            }
+
+            return r;
         }
 
         public IEnumerable<ulong> Data()
